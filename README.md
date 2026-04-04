@@ -8,17 +8,29 @@
 
 ## 运行前准备
 
-1. 在 `config.py` 里设置目标 `UP_UID`
-2. 准备你自己的 B站登录 Cookie
-3. 用环境变量传入 Cookie，避免把敏感信息写进代码
+1. **复制环境变量模板**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **编辑 `.env` 文件**，填入以下必需配置：
+   - `UP_UID`：要监控的 UP 主 UID
+   - `FEISHU_WEBHOOK`：飞书机器人 Webhook 地址
+   - `BILI_COOKIE`：B站登录 Cookie（从浏览器开发者工具复制）
+
+3. **安装依赖**（首次运行）
+   ```bash
+   pip install -r requirements.txt
+   ```
 
 ## 推荐启动方式
 
 ```bash
-cd /Users/trevo1zzz/study/code/time/bilibili_monitor
+cd ~/bilibili_monitor
 
-export BILI_COOKIE='在这里粘贴完整 Cookie'
-./venv/bin/python monitor.py
+source venv/bin/activate
+python monitor.py
 ```
 
 默认抓取模式已经切到 `browser`。
@@ -28,11 +40,10 @@ export BILI_COOKIE='在这里粘贴完整 Cookie'
 - 评论通过视频页 `bili-comments` 组件里的结构化数据获取
 - 当直连 API 经常触发 `412` 时，浏览器模式通常更稳
 
-如果你想强制改回 API 模式：
+如果你想强制改回 API 模式，修改 `.env` 文件：
 
 ```bash
-export BILI_FETCH_MODE='api'
-./venv/bin/python monitor.py
+BILI_FETCH_MODE=api
 ```
 
 ## 测试接口
@@ -40,15 +51,15 @@ export BILI_FETCH_MODE='api'
 ```bash
 cd /Users/trevo1zzz/study/code/time/bilibili_monitor
 
-export BILI_COOKIE='在这里粘贴完整 Cookie'
-./venv/bin/python test_api.py
+source venv/bin/activate
+python test_api.py
 ```
 
 如果不填 `BILI_COOKIE` 也能运行，但常见现象是：
 
-- B站评论区会出现“登录后查看更多评论”的限制
+- B站评论区会出现"登录后查看更多评论"的限制
 - 能抓到的评论窗口更小
-- 对“UP 主回复旧评论”的覆盖会更弱
+- 对"UP 主回复旧评论"的覆盖会更弱
 
 ## 轮询策略
 
@@ -62,3 +73,18 @@ export BILI_COOKIE='在这里粘贴完整 Cookie'
 - 程序启动时会尝试校验登录态
 - 如果检测到 Cookie 已配置但登录态失效，会在控制台和飞书里提示
 - 一旦失效，重新从浏览器复制新的 Cookie 并重启程序即可
+
+## 配置文件说明
+
+所有配置都通过 `.env` 文件管理，主要配置项：
+
+| 配置项                  | 说明                       | 默认值  |
+| ----------------------- | -------------------------- | ------- |
+| `UP_UID`                | 监控的 UP 主 UID           | 必填    |
+| `FEISHU_WEBHOOK`        | 飞书机器人 Webhook         | 必填    |
+| `BILI_COOKIE`           | B站完整 Cookie 字符串      | 必填    |
+| `BILI_FETCH_MODE`       | 抓取模式：browser/api/auto | browser |
+| `CHECK_INTERVAL`        | 检查间隔（秒）             | 10      |
+| `BILI_BROWSER_HEADLESS` | 是否无头模式               | true    |
+
+**注意**：`.env` 文件包含敏感信息，已被 `.gitignore` 忽略，不会提交到 Git。
