@@ -49,7 +49,7 @@ BILI_FETCH_MODE=api
 ## 测试接口
 
 ```bash
-cd /Users/trevo1zzz/study/code/time/bilibili_monitor
+cd ~/bilibili_monitor
 
 source venv/bin/activate
 python test_api.py

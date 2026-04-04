@@ -8,14 +8,11 @@ load_dotenv()
 # 私密配置 - 请在 .env 文件中设置这些值
 # ============================================
 
-# B站UP主配置
-UP_UID = int(os.getenv("UP_UID", "1671203508"))  # 默认：洪洪火火复盘
+# B站UP主配置（请在 .env 文件中设置 UP_UID）
+UP_UID = int(os.getenv("UP_UID", "0"))
 
-# 飞书机器人配置
-FEISHU_WEBHOOK = os.getenv(
-    "FEISHU_WEBHOOK",
-    "https://open.feishu.cn/open-apis/bot/v2/hook/21784197-ad72-45d7-88c5-f7809d07e0fc",
-)
+# 飞书机器人配置（请在 .env 文件中设置 FEISHU_WEBHOOK）
+FEISHU_WEBHOOK = os.getenv("FEISHU_WEBHOOK", "")
 
 # B站登录态配置
 # 推荐直接填浏览器复制出来的完整 Cookie 字符串，优先级高于下面的单项字段。
