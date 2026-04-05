@@ -1,22 +1,42 @@
 import os
+import platform
 from typing import Dict, List, Optional
 
 
 SPACE_VIDEO_RESPONSE_KEYWORD = "/x/space/wbi/arc/search"
 LOGIN_STATUS_URL = "https://api.bilibili.com/x/web-interface/nav"
 
-STEALTH_INIT_SCRIPT = """
+STEALTH_SCRIPT_TEMPLATE = """
 Object.defineProperty(navigator, 'webdriver', {
   get: () => undefined,
 });
 Object.defineProperty(navigator, 'platform', {
-  get: () => 'MacIntel',
+  get: () => '__PLATFORM__',
 });
 Object.defineProperty(navigator, 'languages', {
   get: () => ['zh-CN', 'zh'],
 });
 window.chrome = window.chrome || { runtime: {} };
 """
+
+
+def get_stealth_platform_value(system_name: Optional[str] = None) -> str:
+    detected_system = (system_name or platform.system()).strip().lower()
+    if detected_system == "windows":
+        return "Win32"
+    if detected_system == "darwin":
+        return "MacIntel"
+    return "Linux x86_64"
+
+
+def build_stealth_init_script(system_name: Optional[str] = None) -> str:
+    return STEALTH_SCRIPT_TEMPLATE.replace(
+        "__PLATFORM__",
+        get_stealth_platform_value(system_name),
+    )
+
+
+STEALTH_INIT_SCRIPT = build_stealth_init_script()
 
 COMMENT_COMPONENT_EXTRACTION_SCRIPT = """
 () => {
@@ -117,6 +137,36 @@ def normalize_comment_component_payloads(payloads: List[Dict]) -> List[Dict]:
     return comments
 
 
+def get_browser_executable_candidates(system_name: Optional[str] = None) -> List[str]:
+    detected_system = (system_name or platform.system()).strip().lower()
+    if detected_system == "windows":
+        candidates: List[str] = []
+        windows_roots = [
+            os.environ.get("PROGRAMFILES"),
+            os.environ.get("PROGRAMFILES(X86)"),
+            os.environ.get("LOCALAPPDATA"),
+        ]
+        browser_suffixes = [
+            ("Google", "Chrome", "Application", "chrome.exe"),
+            ("Chromium", "Application", "chrome.exe"),
+        ]
+        for root in windows_roots:
+            if not root:
+                continue
+            for suffix in browser_suffixes:
+                candidates.append(os.path.join(root, *suffix))
+        return candidates
+
+    return [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "/Applications/Chromium.app/Contents/MacOS/Chromium",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser",
+    ]
+
+
 class BrowserBilibiliFetcher:
     def __init__(
         self,
@@ -143,15 +193,7 @@ class BrowserBilibiliFetcher:
         return self._detect_chrome_path()
 
     def _detect_chrome_path(self) -> str:
-        candidates = [
-            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-            "/Applications/Chromium.app/Contents/MacOS/Chromium",
-            "/usr/bin/google-chrome",
-            "/usr/bin/google-chrome-stable",
-            "/usr/bin/chromium",
-            "/usr/bin/chromium-browser",
-        ]
-        for candidate in candidates:
+        for candidate in get_browser_executable_candidates():
             if os.path.exists(candidate):
                 return candidate
         return ""

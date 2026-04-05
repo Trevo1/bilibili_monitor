@@ -22,6 +22,7 @@
 3. **安装依赖**（首次运行）
    ```bash
    pip install -r requirements.txt
+   playwright install chromium
    ```
 
 ## 推荐启动方式
@@ -33,9 +34,19 @@ source venv/bin/activate
 python monitor.py
 ```
 
+Windows 下可以用：
+
+```powershell
+cd C:\path\to\bilibili_monitor
+
+.\venv\Scripts\Activate.ps1
+python monitor.py
+```
+
 默认抓取模式已经切到 `browser`。
 
 - 会优先启动本机 Chrome，用真实浏览器上下文访问 B站
+- 如果没有显式配置 `BILI_BROWSER_EXECUTABLE`，程序会自动探测常见的 Chrome / Chromium 安装路径
 - 最新视频通过空间页实际发出的网络响应获取
 - 评论通过视频页 `bili-comments` 组件里的结构化数据获取
 - 当直连 API 经常触发 `412` 时，浏览器模式通常更稳
@@ -53,6 +64,21 @@ cd ~/bilibili_monitor
 
 source venv/bin/activate
 python test_api.py
+```
+
+Windows 下测试可以用：
+
+```powershell
+cd C:\path\to\bilibili_monitor
+
+.\venv\Scripts\Activate.ps1
+python test_api.py
+```
+
+如果自动探测不到浏览器，可以在 `.env` 中手动指定，例如：
+
+```env
+BILI_BROWSER_EXECUTABLE=C:\Program Files\Google\Chrome\Application\chrome.exe
 ```
 
 如果不填 `BILI_COOKIE` 也能运行，但常见现象是：
@@ -84,6 +110,7 @@ python test_api.py
 | `FEISHU_WEBHOOK`        | 飞书机器人 Webhook         | 必填    |
 | `BILI_COOKIE`           | B站完整 Cookie 字符串      | 必填    |
 | `BILI_FETCH_MODE`       | 抓取模式：browser/api/auto | browser |
+| `BILI_BROWSER_EXECUTABLE` | 浏览器路径，留空则自动探测 | 自动探测 |
 | `CHECK_INTERVAL`        | 检查间隔（秒）             | 10      |
 | `BILI_BROWSER_HEADLESS` | 是否无头模式               | true    |
 

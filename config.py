@@ -34,8 +34,8 @@ BILI_DEDEUSERID = os.getenv("BILI_DEDEUSERID", "")
 BILI_FETCH_MODE = os.getenv("BILI_FETCH_MODE", "browser").strip().lower()
 BILI_BROWSER_EXECUTABLE = os.getenv(
     "BILI_BROWSER_EXECUTABLE",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-)
+    "",
+).strip()
 BILI_BROWSER_HEADLESS = os.getenv("BILI_BROWSER_HEADLESS", "true").strip().lower() != "false"
 BILI_BROWSER_TIMEOUT_MS = int(os.getenv("BILI_BROWSER_TIMEOUT_MS", "30000"))
 

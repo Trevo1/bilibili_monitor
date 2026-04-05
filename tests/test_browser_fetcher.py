@@ -1,7 +1,11 @@
+import importlib
+import os
+import sys
 import unittest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+import browser_fetcher
 from browser_fetcher import (
     BrowserBilibiliFetcher,
     build_playwright_cookies,
@@ -76,6 +80,42 @@ class BrowserFetcherHelpersTestCase(unittest.TestCase):
         self.assertEqual(comments[1]["parent"], 100)
 
 
+class BrowserFetcherPlatformCompatibilityTestCase(unittest.TestCase):
+    def test_detect_chrome_path_supports_windows_install_locations(self):
+        fetcher = BrowserBilibiliFetcher(cookie_string="")
+        expected_path = os.path.join(
+            "C:\\Program Files",
+            "Google",
+            "Chrome",
+            "Application",
+            "chrome.exe",
+        )
+
+        with patch("platform.system", return_value="Windows"), patch.dict(
+            "browser_fetcher.os.environ",
+            {
+                "PROGRAMFILES": "C:\\Program Files",
+                "PROGRAMFILES(X86)": "C:\\Program Files (x86)",
+                "LOCALAPPDATA": "C:\\Users\\tester\\AppData\\Local",
+            },
+            clear=False,
+        ), patch(
+            "browser_fetcher.os.path.exists",
+            side_effect=lambda path: path == expected_path,
+        ):
+            detected_path = fetcher._detect_chrome_path()
+
+        self.assertEqual(detected_path, expected_path)
+
+    def test_stealth_init_script_uses_windows_platform_value(self):
+        with patch("platform.system", return_value="Windows"):
+            reloaded_module = importlib.reload(browser_fetcher)
+            try:
+                self.assertIn("Win32", reloaded_module.STEALTH_INIT_SCRIPT)
+            finally:
+                importlib.reload(reloaded_module)
+
+
 class BrowserFetcherLoginHintTestCase(unittest.IsolatedAsyncioTestCase):
     async def test_get_login_hint_returns_none_when_nav_api_reports_logged_out(self):
         fetcher = BrowserBilibiliFetcher(cookie_string="DedeUserID=123")
@@ -123,6 +163,20 @@ class BrowserFetcherLoginHintTestCase(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result, {"mid": 123, "uname": "tester"})
         page.close.assert_awaited_once()
+
+
+class ConfigCompatibilityTestCase(unittest.TestCase):
+    def test_browser_executable_defaults_to_empty_string(self):
+        with patch.dict(os.environ, {}, clear=True), patch(
+            "dotenv.load_dotenv",
+            return_value=False,
+        ):
+            sys.modules.pop("config", None)
+            config_module = importlib.import_module("config")
+            try:
+                self.assertEqual(config_module.BILI_BROWSER_EXECUTABLE, "")
+            finally:
+                sys.modules.pop("config", None)
 
 
 if __name__ == "__main__":
